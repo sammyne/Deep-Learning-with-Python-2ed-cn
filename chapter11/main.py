@@ -1,43 +1,43 @@
-import string
-import re
+import os
 
-import tokenizers
+import datasets
+from torch.utils.data import DataLoader
 
-from tokenizers import Tokenizer
-from tokenizers.models import WordLevel
-from tokenizers.trainers import WordLevelTrainer
-from tokenizers.normalizers import Lowercase
-from tokenizers.pre_tokenizers import Whitespace, Sequence,Punctuation
+def text_dataset_from_dir(dir):
+    out = []
+    for f in filter(lambda x: x.is_dir(), os.scandir(dir)):
+        label = 1 if f.name == "pos" else 0
+        v = datasets.load_dataset("text", data_dir=f.path).map(lambda x: {"label": label})["train"]
+        out.append(v)
+
+    ds =  datasets.concatenate_datasets(out).with_format("torch") 
+
+    # return DataLoader(ds, batch_size=32) 
 
 
-# 加载预训练的分词器
-tokenizer = Tokenizer(WordLevel(unk_token="[UNK]"))
-tokenizer.enable_padding()
-tokenizer.normalizer = Lowercase()
-tokenizer.pre_tokenizer = Sequence(
-    [
-        Whitespace(),
-        Punctuation(behavior='removed')
-    ]
-)
-trainer = WordLevelTrainer(special_tokens=["[UNK]"])
+# for f in os.scandir("aclImdb/world"):
+#     print(f.is_dir(), f.path, f.name)
 
-data = [
-    "I write, erase, rewrite",
-    "Erase again, and then",
-    "A poppy blooms.",
-]
+train_ds = text_dataset_from_dir("aclImdb/train")
+print(len(train_ds)*32)
 
-tokenizer.train_from_iterator(data, trainer=trainer, length=len(data))
+for v in train_ds:
+    break
+    inputs, targets = v["text"], v["label"]
 
-# print(tokenizer.get_vocab())
+    print("inputs.len", len(inputs))
+    print('inputs[0]:', inputs[0])
 
-test_sentence = "I write, rewrite, and still rewrite again"
+    print("targets.shape: ", targets.shape)
+    print("targets[0]: ", targets[0])
+    print("targets[0].dtype: ", targets[0].dtype)
 
-encoded_sentence = tokenizer.encode(test_sentence)
-print(encoded_sentence.ids)
+    break
 
-inverse_vocab = {v: k for k, v in tokenizer.get_vocab().items()}
-print(inverse_vocab)
-decoded_sentence = " ".join(inverse_vocab[int(i)] for i in encoded_sentence.ids)
-print(decoded_sentence)
+    print("inputs.shape:", inputs.shape)
+    print("inputs.dtype:", inputs.dtype)
+    print("targets.shape:", targets.shape)
+    print("targets.dtype:", targets.dtype)
+    print("inputs[0]:", inputs[0])
+    print("targets[0]:", targets[0])
+    break
